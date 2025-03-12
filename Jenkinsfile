@@ -53,6 +53,15 @@ pipeline {
                     }
                 }
             }
+
+            post {
+              always {
+                // Archive test result để Jenkins UI có thể hiển thị
+                archiveArtifacts artifacts: '**/target/surefire-reports/*.xml', allowEmptyArchive: true
+                // Đảm bảo JUnit luôn post test result lên Jenkins
+                junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+              }
+            }
         }
 
         stage('Build') {
@@ -72,12 +81,5 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            // Archive test result để Jenkins UI có thể hiển thị
-            archiveArtifacts artifacts: '**/target/surefire-reports/*.xml', allowEmptyArchive: true
-            // Đảm bảo JUnit luôn post test result lên Jenkins
-            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
-        }
-    }
+    
 }
