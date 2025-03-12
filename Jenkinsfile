@@ -3,6 +3,9 @@ pipeline {
     environment {
         MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
     }
+    options {
+        skipDefaultCheckout()
+    }
     stages {
         stage('Checkout') {
             steps {
