@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        MAVEN_HOME = tool 'Maven'
+        MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
     }
     stages {
         stage('Checkout') {
