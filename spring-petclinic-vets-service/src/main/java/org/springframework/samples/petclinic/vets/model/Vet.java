@@ -31,7 +31,7 @@ import java.util.*;
  * @author Sam Brannen
  * @author Arjen Poutsma
  * @author Maciej Szarlinski
- * @author Ramazan Sakin  ddasdasd
+ * @author Ramazan Sakin
  */
 @Entity
 @Table(name = "vets")
