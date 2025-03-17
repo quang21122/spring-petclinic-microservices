@@ -64,7 +64,6 @@ class PetResourceTest {
         pet.setBirthDate(Date.valueOf(LocalDate.now().minusYears(1)));
         
         owner.addPet(pet);
-        owner.addPet(pet);
     }
 
     @Test
