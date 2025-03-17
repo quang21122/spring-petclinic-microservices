@@ -66,6 +66,12 @@ public class PetResourceUnitTest {
     void shouldGetPetById() throws Exception {
         // Arrange
         Pet pet = createPet(1, "Buddy", createPetType(1, "dog"));
+        Owner owner = new Owner();
+        owner.setId(1);
+        owner.setFirstName("John");  // Must set first name
+        owner.setLastName("Doe");    // Must set last name
+        pet.setOwner(owner);         // Must set owner on pet
+        
         when(petRepository.findById(1)).thenReturn(Optional.of(pet));
 
         // Act & Assert
@@ -97,16 +103,20 @@ public class PetResourceUnitTest {
         // Arrange
         Owner owner = new Owner();
         owner.setId(1);
+        owner.setFirstName("John");
+        owner.setLastName("Doe");
         
         Pet pet = createPet(1, "Buddy", createPetType(1, "dog"));
         pet.setOwner(owner);
         
         when(petRepository.findById(1)).thenReturn(Optional.of(pet));
+        // Add this line to mock finding the pet type
+        when(petRepository.findPetTypeById(2)).thenReturn(Optional.of(createPetType(2, "cat")));
         
-        // Act & Assert
-        mockMvc.perform(put("/owners/1/pets/1")
+        // Act & Assert - use the correct URL pattern as in the controller
+        mockMvc.perform(put("/owners/*/pets/{petId}", 1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"type\": {\"id\": 2}}"))
+                .content("{\"id\": 1, \"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"typeId\": 2}"))
                 .andExpect(status().isNoContent());
         
         verify(petRepository).save(any(Pet.class));
