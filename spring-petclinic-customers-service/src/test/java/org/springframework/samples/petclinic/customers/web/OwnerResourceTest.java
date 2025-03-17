@@ -43,12 +43,13 @@ class OwnerResourceTest {
     @BeforeEach
     void setup() {
         owner = new Owner();
+        owner.setId(1);
         owner.setFirstName("John");
         owner.setLastName("Doe");
         owner.setAddress("123 Main St");
         owner.setCity("Anytown");
         owner.setTelephone("555-1212");
-        
+
         Pet pet = new Pet();
         pet.setId(1);
         pet.setName("Buddy");
@@ -57,6 +58,21 @@ class OwnerResourceTest {
         Date birthDate = Date.from(LocalDate.now().minusYears(2).atStartOfDay(ZoneId.systemDefault()).toInstant());
         pet.setBirthDate(birthDate);
         owner.addPet(pet);
+    }
+    
+    @Test
+    void shouldReturnOwnerDetails() throws Exception {
+        Owner owner = new Owner();
+        owner.setFirstName("John");
+        owner.setLastName("Doe");
+        given(ownerRepository.findById(1)).willReturn(Optional.of(owner));
+
+        mvc.perform(get("/owners/1")
+                .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.firstName").value("John"))
+            .andExpect(jsonPath("$.lastName").value("Doe"));
     }
 
     @Test
@@ -78,11 +94,11 @@ class OwnerResourceTest {
 
     @Test
     void shouldReturnNotFoundForNonExistingOwner() throws Exception {
-        given(ownerRepository.findById(99)).willReturn(Optional.empty());
+        given(ownerRepository.findById(1)).willReturn(Optional.empty());
 
-        mvc.perform(get("/owners/99")
+        mvc.perform(get("/owners/1")
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+            .andExpect(status().isNotFound());
     }
 
     @Test
