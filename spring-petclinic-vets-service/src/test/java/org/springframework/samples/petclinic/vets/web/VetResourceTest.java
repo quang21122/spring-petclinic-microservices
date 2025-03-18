@@ -68,6 +68,7 @@ class VetResourceTest {
             .andExpect(jsonPath("$[0].firstName").value("James"))
             .andExpect(jsonPath("$[0].lastName").value("Carter"))
             .andExpect(jsonPath("$[0].specialties").isEmpty());
+            // test
 
         verify(vetRepository, times(1)).findAll();
     }
