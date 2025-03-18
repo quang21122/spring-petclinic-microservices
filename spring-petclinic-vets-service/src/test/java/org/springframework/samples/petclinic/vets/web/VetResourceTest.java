@@ -21,17 +21,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.samples.petclinic.vets.model.Specialty;
 import org.springframework.samples.petclinic.vets.model.Vet;
 import org.springframework.samples.petclinic.vets.model.VetRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import static java.util.Arrays.asList;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * @author Maciej Szarlinski
@@ -49,14 +52,63 @@ class VetResourceTest {
 
     @Test
     void shouldGetAListOfVets() throws Exception {
-
         Vet vet = new Vet();
         vet.setId(1);
+        vet.setFirstName("James");
+        vet.setLastName("Carter");
 
         given(vetRepository.findAll()).willReturn(asList(vet));
 
         mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value(1))
+            .andExpect(jsonPath("$[0].firstName").value("James"))
+            .andExpect(jsonPath("$[0].lastName").value("Carter"))
+            .andExpect(jsonPath("$[0].specialties").isEmpty());
+    }
+
+    @Test
+    void shouldGetAListOfVetsWithSpecialties() throws Exception {
+        Specialty specialty = new Specialty();
+        specialty.setName("radiology");
+
+        Vet vet = new Vet();
+        vet.setId(1);
+        vet.setFirstName("James");
+        vet.setLastName("Carter");
+        vet.addSpecialty(specialty);
+
+        given(vetRepository.findAll()).willReturn(asList(vet));
+
+        mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value(1))
+            .andExpect(jsonPath("$[0].firstName").value("James"))
+            .andExpect(jsonPath("$[0].lastName").value("Carter"))
+            .andExpect(jsonPath("$[0].specialties[0].name").value("radiology"));
+    }
+
+    @Test
+    void shouldGetEmptyListOfVets() throws Exception {
+        given(vetRepository.findAll()).willReturn(Collections.emptyList());
+
+        mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void shouldReturnJsonWhenNoAcceptHeaderProvided() throws Exception {
+        Vet vet = new Vet();
+        vet.setId(1);
+        vet.setFirstName("James");
+        vet.setLastName("Carter");
+
+        given(vetRepository.findAll()).willReturn(asList(vet));
+
+        mvc.perform(get("/vets"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$[0].id").value(1));
     }
 }
