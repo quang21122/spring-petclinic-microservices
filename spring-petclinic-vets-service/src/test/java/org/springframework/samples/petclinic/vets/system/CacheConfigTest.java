@@ -5,20 +5,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.Arrays;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(classes = {CacheConfig.class, CacheConfigTest.TestConfig.class})
+@SpringBootTest
 @ActiveProfiles("test")
 class CacheConfigTest {
 
     @TestConfiguration
+    @EnableCaching
     static class TestConfig {
         @Bean
         VetsProperties vetsProperties() {
             return new VetsProperties(new VetsProperties.Cache(300, 1000));
+        }
+
+        @Bean
+        CacheManager cacheManager() {
+            SimpleCacheManager cacheManager = new SimpleCacheManager();
+            cacheManager.setCaches(Arrays.asList(
+                new ConcurrentMapCache("vets")
+            ));
+            return cacheManager;
         }
     }
 
