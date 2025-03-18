@@ -122,6 +122,54 @@ public class PetResourceUnitTest {
         verify(petRepository).save(any(Pet.class));
     }
 
+    @Test
+    void shouldReturnNotFoundForNonExistingPet() throws Exception {
+        // Arrange
+        when(petRepository.findById(999)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(get("/owners/*/pets/999")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingOwnerWhenCreatingPet() throws Exception {
+        // Arrange
+        when(ownerRepository.findById(999)).thenReturn(Optional.empty());
+        
+        // Act & Assert
+        mockMvc.perform(post("/owners/999/pets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"type\": {\"id\": 2}}"))
+                .andExpect(status().isNotFound());
+        
+        verify(petRepository, never()).save(any(Pet.class));
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidPetData() throws Exception {
+        // Act & Assert
+        mockMvc.perform(post("/owners/1/pets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"\", \"birthDate\": \"invalid-date\", \"type\": {}}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingPetType() throws Exception {
+        // Arrange
+        Pet pet = createPet(1, "Buddy", createPetType(1, "dog"));
+        when(petRepository.findById(1)).thenReturn(Optional.of(pet));
+        when(petRepository.findPetTypeById(999)).thenReturn(Optional.empty());
+        
+        // Act & Assert
+        mockMvc.perform(put("/owners/*/pets/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"id\": 1, \"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"typeId\": 999}"))
+                .andExpect(status().isNotFound());
+    }
+
     private PetType createPetType(int id, String name) {
         PetType petType = new PetType();
         petType.setId(id);

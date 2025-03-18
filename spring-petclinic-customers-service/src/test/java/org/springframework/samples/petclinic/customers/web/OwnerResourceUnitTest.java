@@ -115,6 +115,59 @@ public class OwnerResourceUnitTest {
                 .andExpect(jsonPath("$[0].firstName").value("John"))
                 .andExpect(jsonPath("$[1].firstName").value("Jane"));
     }
+
+    @Test
+    void shouldReturnBadRequestForInvalidOwnerData() throws Exception {
+        // Act & Assert
+        mockMvc.perform(post("/owners")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"firstName\": \"\", \"lastName\": \"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldSearchOwnersByLastName() throws Exception {
+        // Arrange
+        List<Owner> owners = Arrays.asList(
+            createOwner(1, "John", "Smith"),
+            createOwner(2, "Jane", "Smith")
+        );
+        when(ownerRepository.findByLastName("Smith")).thenReturn(owners);
+
+        // Act & Assert
+        mockMvc.perform(get("/owners/search?lastName=Smith")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].lastName").value("Smith"))
+                .andExpect(jsonPath("$[1].lastName").value("Smith"));
+    }
+
+    @Test
+    void shouldReturnNotFoundForUpdateNonExistingOwner() throws Exception {
+        // Arrange
+        when(ownerRepository.findById(999)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(put("/owners/999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"city\": \"Chicago\"}"))
+                .andExpect(status().isNotFound());
+        
+        verify(ownerRepository, never()).save(any(Owner.class));
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoOwnersFound() throws Exception {
+        // Arrange
+        when(ownerRepository.findAll()).thenReturn(Arrays.asList());
+
+        // Act & Assert
+        mockMvc.perform(get("/owners")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
     
     private Owner createOwner(int id, String firstName, String lastName) {
         Owner owner = new Owner();
