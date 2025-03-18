@@ -38,7 +38,7 @@ public class OwnerResourceUnitTest {
 
     @Mock
     private OwnerRepository ownerRepository;
-
+    // test
     @Mock
     private OwnerEntityMapper ownerEntityMapper;
 
