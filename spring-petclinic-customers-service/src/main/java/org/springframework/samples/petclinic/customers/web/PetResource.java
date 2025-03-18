@@ -74,12 +74,11 @@ class PetResource {
     }
 
     private Pet save(final Pet pet, final PetRequest petRequest) {
-
         pet.setName(petRequest.name());
         pet.setBirthDate(petRequest.birthDate());
 
         petRepository.findPetTypeById(petRequest.typeId())
-            .ifPresent(pet::setType);
+            .orElseThrow(() -> new ResourceNotFoundException("PetType " + petRequest.typeId() + " not found"));
 
         log.info("Saving pet {}", pet);
         return petRepository.save(pet);
