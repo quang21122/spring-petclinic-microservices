@@ -33,6 +33,7 @@ class VisitResourceTest {
 
     @MockBean
     VisitRepository visitRepository;
+    // test
 
     @Test
     void shouldCreateVisit() throws Exception {
