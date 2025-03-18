@@ -30,9 +30,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -65,6 +68,8 @@ class VetResourceTest {
             .andExpect(jsonPath("$[0].firstName").value("James"))
             .andExpect(jsonPath("$[0].lastName").value("Carter"))
             .andExpect(jsonPath("$[0].specialties").isEmpty());
+
+        verify(vetRepository, times(1)).findAll();
     }
 
     @Test
@@ -77,7 +82,7 @@ class VetResourceTest {
         vet.setFirstName("James");
         vet.setLastName("Carter");
         vet.addSpecialty(specialty);
-        // test
+
         given(vetRepository.findAll()).willReturn(asList(vet));
 
         mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
@@ -86,6 +91,8 @@ class VetResourceTest {
             .andExpect(jsonPath("$[0].firstName").value("James"))
             .andExpect(jsonPath("$[0].lastName").value("Carter"))
             .andExpect(jsonPath("$[0].specialties[0].name").value("radiology"));
+
+        verify(vetRepository, times(1)).findAll();
     }
 
     @Test
@@ -95,6 +102,8 @@ class VetResourceTest {
         mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isEmpty());
+
+        verify(vetRepository, times(1)).findAll();
     }
 
     @Test
@@ -110,5 +119,56 @@ class VetResourceTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$[0].id").value(1));
+
+        verify(vetRepository, times(1)).findAll();
+    }
+
+    @Test
+    void shouldReturnXmlWhenXmlIsAccepted() throws Exception {
+        Vet vet = new Vet();
+        vet.setId(1);
+        vet.setFirstName("James");
+        vet.setLastName("Carter");
+
+        given(vetRepository.findAll()).willReturn(asList(vet));
+
+        mvc.perform(get("/vets").accept(MediaType.APPLICATION_XML))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(vetRepository, times(1)).findAll();
+    }
+
+    @Test
+    void shouldGetMultipleVets() throws Exception {
+        Vet vet1 = new Vet();
+        vet1.setId(1);
+        vet1.setFirstName("James");
+        vet1.setLastName("Carter");
+
+        Vet vet2 = new Vet();
+        vet2.setId(2);
+        vet2.setFirstName("Helen");
+        vet2.setLastName("Leary");
+
+        given(vetRepository.findAll()).willReturn(Arrays.asList(vet1, vet2));
+
+        mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value(1))
+            .andExpect(jsonPath("$[0].firstName").value("James"))
+            .andExpect(jsonPath("$[0].lastName").value("Carter"))
+            .andExpect(jsonPath("$[1].id").value(2))
+            .andExpect(jsonPath("$[1].firstName").value("Helen"))
+            .andExpect(jsonPath("$[1].lastName").value("Leary"));
+
+        verify(vetRepository, times(1)).findAll();
+    }
+
+    @Test
+    void shouldHandleInvalidAcceptHeader() throws Exception {
+        mvc.perform(get("/vets").accept("invalid/type"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 }
