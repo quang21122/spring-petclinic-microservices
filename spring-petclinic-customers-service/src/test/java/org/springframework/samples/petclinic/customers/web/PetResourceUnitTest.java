@@ -13,6 +13,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.samples.petclinic.customers.model.*;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -52,6 +53,7 @@ public class PetResourceUnitTest {
         mockMvc = MockMvcBuilders.standaloneSetup(petResource)
             .setMessageConverters(converter)
             .setControllerAdvice(new RestResponseEntityExceptionHandler())
+            .setValidator(new LocalValidatorFactoryBean())
             .build();
     }
 
@@ -157,7 +159,7 @@ public class PetResourceUnitTest {
         // Act & Assert
         mockMvc.perform(post("/owners/999/pets")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"type\": {\"id\": 2}}"))
+                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"typeId\": 2}"))
                 .andExpect(status().isNotFound());
         
         verify(petRepository, never()).save(any(Pet.class));
@@ -207,8 +209,7 @@ public class PetResourceUnitTest {
                 .andExpect(jsonPath("$.name").value("Buddy"))
                 .andExpect(jsonPath("$.birthDate").value("2020-01-01"))
                 .andExpect(jsonPath("$.type.name").value("dog"))
-                .andExpect(jsonPath("$.owner.firstName").value("John"))
-                .andExpect(jsonPath("$.owner.lastName").value("Doe"));
+                .andExpect(jsonPath("$.owner").value("John Doe"));
     }
 
     @Test
