@@ -8,6 +8,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.samples.petclinic.customers.model.Owner;
 import org.springframework.samples.petclinic.customers.model.OwnerRepository;
+import org.springframework.samples.petclinic.customers.model.Pet;
+import org.springframework.samples.petclinic.customers.model.PetType;
 import org.springframework.samples.petclinic.customers.web.mapper.OwnerEntityMapper;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -18,6 +20,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.sql.Date;
+import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -202,12 +206,110 @@ public class OwnerResourceUnitTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
     }
+
+    @Test
+    void shouldValidateOwnerFieldsWhenCreating() throws Exception {
+        // Test missing telephone
+        mockMvc.perform(post("/owners")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"address\": \"123 Main St\", \"city\": \"New York\"}"))
+                .andExpect(status().isBadRequest());
+
+        // Test invalid telephone format
+        mockMvc.perform(post("/owners")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"address\": \"123 Main St\", \"city\": \"New York\", \"telephone\": \"abc\"}"))
+                .andExpect(status().isBadRequest());
+
+        // Test missing address
+        mockMvc.perform(post("/owners")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"city\": \"New York\", \"telephone\": \"1234567890\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(ownerRepository, never()).save(any(Owner.class));
+    }
+
+    @Test
+    void shouldValidateOwnerFieldsWhenUpdating() throws Exception {
+        Owner existingOwner = new Owner();
+        existingOwner.setId(1);
+        when(ownerRepository.findById(1)).thenReturn(Optional.of(existingOwner));
+
+        // Test missing telephone
+        mockMvc.perform(put("/owners/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"address\": \"123 Main St\", \"city\": \"New York\"}"))
+                .andExpect(status().isBadRequest());
+
+        // Test invalid telephone format
+        mockMvc.perform(put("/owners/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"address\": \"123 Main St\", \"city\": \"New York\", \"telephone\": \"abc\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(ownerRepository, never()).save(any(Owner.class));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenSearchingNonExistingLastName() throws Exception {
+        // Arrange
+        when(ownerRepository.findByLastName("Unknown")).thenReturn(Arrays.asList());
+
+        // Act & Assert
+        mockMvc.perform(get("/owners/search?lastName=Unknown")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenSearchingWithEmptyLastName() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/owners/search?lastName=")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnOwnerWithPets() throws Exception {
+        // Arrange
+        Owner owner = createOwnerWithPets();
+        when(ownerRepository.findById(1)).thenReturn(Optional.of(owner));
+
+        // Act & Assert
+        mockMvc.perform(get("/owners/1")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("John"))
+                .andExpect(jsonPath("$.lastName").value("Doe"))
+                .andExpect(jsonPath("$.pets[0].name").value("Max"))
+                .andExpect(jsonPath("$.pets[0].type.name").value("dog"));
+    }
     
     private Owner createOwner(int id, String firstName, String lastName) {
         Owner owner = new Owner();
         owner.setId(id);
         owner.setFirstName(firstName);
         owner.setLastName(lastName);
+        return owner;
+    }
+
+    private Owner createOwnerWithPets() {
+        Owner owner = createOwner(1, "John", "Doe");
+        owner.setAddress("123 Main St");
+        owner.setCity("New York");
+        owner.setTelephone("1234567890");
+
+        Pet pet = new Pet();
+        pet.setId(1);
+        pet.setName("Max");
+        PetType dogType = new PetType();
+        dogType.setId(1);
+        dogType.setName("dog");
+        pet.setType(dogType);
+        pet.setBirthDate(Date.valueOf(LocalDate.now().minusYears(2)));
+        owner.addPet(pet);
+
         return owner;
     }
 }

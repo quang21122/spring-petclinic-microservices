@@ -171,6 +171,118 @@ public class PetResourceUnitTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void shouldGetPetDetails() throws Exception {
+        // Arrange
+        Pet pet = createPet(1, "Buddy", createPetType(1, "dog"));
+        Owner owner = new Owner();
+        owner.setId(1);
+        owner.setFirstName("John");
+        owner.setLastName("Doe");
+        pet.setOwner(owner);
+        pet.setBirthDate(Date.valueOf("2020-01-01"));
+        
+        when(petRepository.findById(1)).thenReturn(Optional.of(pet));
+
+        // Act & Assert
+        mockMvc.perform(get("/owners/*/pets/1")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Buddy"))
+                .andExpect(jsonPath("$.birthDate").value("2020-01-01"))
+                .andExpect(jsonPath("$.type.name").value("dog"))
+                .andExpect(jsonPath("$.owner.firstName").value("John"))
+                .andExpect(jsonPath("$.owner.lastName").value("Doe"));
+    }
+
+    @Test
+    void shouldValidatePetTypeWhenCreating() throws Exception {
+        // Arrange
+        Owner owner = new Owner();
+        owner.setId(1);
+        when(ownerRepository.findById(1)).thenReturn(Optional.of(owner));
+        when(petRepository.findPetTypeById(999)).thenReturn(Optional.empty());
+        
+        // Act & Assert
+        mockMvc.perform(post("/owners/1/pets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"typeId\": 999}"))
+                .andExpect(status().isNotFound());
+        
+        verify(petRepository, never()).save(any(Pet.class));
+    }
+
+    @Test
+    void shouldValidatePetNameWhenCreating() throws Exception {
+        // Arrange
+        Owner owner = new Owner();
+        owner.setId(1);
+        when(ownerRepository.findById(1)).thenReturn(Optional.of(owner));
+        
+        // Act & Assert
+        mockMvc.perform(post("/owners/1/pets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"\", \"birthDate\": \"2020-09-07\", \"typeId\": 1}"))
+                .andExpect(status().isBadRequest());
+        
+        verify(petRepository, never()).save(any(Pet.class));
+    }
+
+    @Test
+    void shouldValidateBirthDateWhenCreating() throws Exception {
+        // Arrange
+        Owner owner = new Owner();
+        owner.setId(1);
+        when(ownerRepository.findById(1)).thenReturn(Optional.of(owner));
+        
+        // Act & Assert
+        mockMvc.perform(post("/owners/1/pets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Leo\", \"birthDate\": \"invalid-date\", \"typeId\": 1}"))
+                .andExpect(status().isBadRequest());
+        
+        verify(petRepository, never()).save(any(Pet.class));
+    }
+
+    @Test
+    void shouldAddPetToOwnerWhenCreating() throws Exception {
+        // Arrange
+        Owner owner = new Owner();
+        owner.setId(1);
+        PetType catType = createPetType(2, "cat");
+        
+        when(ownerRepository.findById(1)).thenReturn(Optional.of(owner));
+        when(petRepository.findPetTypeById(2)).thenReturn(Optional.of(catType));
+        when(petRepository.save(any(Pet.class))).thenAnswer(invocation -> {
+            Pet savedPet = invocation.getArgument(0);
+            savedPet.setId(10);
+            return savedPet;
+        });
+        
+        // Act & Assert
+        mockMvc.perform(post("/owners/1/pets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"typeId\": 2}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.name").value("Leo"))
+                .andExpect(jsonPath("$.type.name").value("cat"));
+        
+        verify(petRepository).save(any(Pet.class));
+    }
+
+    @Test
+    void shouldValidateOwnerIdWhenCreating() throws Exception {
+        // Act & Assert
+        mockMvc.perform(post("/owners/0/pets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"typeId\": 1}"))
+                .andExpect(status().isBadRequest());
+        
+        verify(petRepository, never()).save(any(Pet.class));
+    }
+
     private PetType createPetType(int id, String name) {
         PetType petType = new PetType();
         petType.setId(id);
