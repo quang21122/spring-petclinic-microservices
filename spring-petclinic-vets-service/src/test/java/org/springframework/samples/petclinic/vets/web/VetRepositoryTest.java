@@ -1,5 +1,6 @@
 package org.springframework.samples.petclinic.vets.web;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -9,6 +10,7 @@ import org.springframework.samples.petclinic.vets.model.Vet;
 import org.springframework.samples.petclinic.vets.model.VetRepository;
 import org.springframework.test.context.ActiveProfiles;
 
+import jakarta.persistence.EntityManager;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,10 +20,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VetRepositoryTest {
 
     @Autowired
-    private TestEntityManager entityManager;
+    private TestEntityManager testEntityManager;
 
     @Autowired
     private VetRepository vetRepository;
+
+    @BeforeEach
+    void setup() {
+        // Clean up the tables
+        EntityManager em = testEntityManager.getEntityManager();
+        em.createQuery("DELETE FROM Vet").executeUpdate();
+        em.createQuery("DELETE FROM Specialty").executeUpdate();
+    }
 
     @Test
     void shouldFindAllVets() {
@@ -29,14 +39,14 @@ class VetRepositoryTest {
         Vet vet = new Vet();
         vet.setFirstName("James");
         vet.setLastName("Carter");
-        entityManager.persist(vet);
+        testEntityManager.persist(vet);
 
         Vet vet2 = new Vet();
         vet2.setFirstName("Helen");
         vet2.setLastName("Leary");
-        entityManager.persist(vet2);
+        testEntityManager.persist(vet2);
 
-        entityManager.flush();
+        testEntityManager.flush();
 
         // when
         List<Vet> vets = vetRepository.findAll();
@@ -52,14 +62,14 @@ class VetRepositoryTest {
         // given
         Specialty specialty = new Specialty();
         specialty.setName("radiology");
-        entityManager.persist(specialty);
+        testEntityManager.persist(specialty);
 
         Vet vet = new Vet();
         vet.setFirstName("James");
         vet.setLastName("Carter");
         vet.addSpecialty(specialty);
-        entityManager.persist(vet);
-        entityManager.flush();
+        testEntityManager.persist(vet);
+        testEntityManager.flush();
 
         // when
         List<Vet> vets = vetRepository.findAll();

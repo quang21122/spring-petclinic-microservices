@@ -65,8 +65,9 @@ class VetTest {
         vet.setLastName("Carter");
 
         String toString = vet.toString();
-        assertThat(toString).contains("firstName=James");
-        assertThat(toString).contains("lastName=Carter");
+        assertThat(toString).contains("Vet{");
+        assertThat(toString).contains("firstName='James'");
+        assertThat(toString).contains("lastName='Carter'");
         assertThat(toString).contains("specialties=[]");
     }
 } 

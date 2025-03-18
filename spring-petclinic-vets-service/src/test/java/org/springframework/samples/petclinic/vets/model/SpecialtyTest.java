@@ -42,6 +42,7 @@ class SpecialtyTest {
         specialty.setName("dentistry");
 
         String toString = specialty.toString();
-        assertThat(toString).contains("name=dentistry");
+        assertThat(toString).contains("Specialty{");
+        assertThat(toString).contains("name='dentistry'");
     }
 } 
