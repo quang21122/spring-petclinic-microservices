@@ -88,11 +88,12 @@ public class PetResourceUnitTest {
         Owner owner = new Owner();
         owner.setId(1);
         when(ownerRepository.findById(1)).thenReturn(Optional.of(owner));
+        when(petRepository.findPetTypeById(2)).thenReturn(Optional.of(createPetType(2, "cat")));
         
         // Act & Assert
         mockMvc.perform(post("/owners/1/pets")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"type\": {\"id\": 2}}"))
+                .content("{\"name\": \"Leo\", \"birthDate\": \"2020-09-07\", \"typeId\": 2}"))
                 .andExpect(status().isCreated());
         
         verify(petRepository).save(any(Pet.class));

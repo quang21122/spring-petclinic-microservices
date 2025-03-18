@@ -76,7 +76,7 @@ public class OwnerResourceUnitTest {
         // Act & Assert
         mockMvc.perform(post("/owners")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"city\": \"New York\"}"))
+                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"address\": \"123 Main St\", \"city\": \"New York\", \"telephone\": \"1234567890\"}"))
                 .andExpect(status().isCreated());
     }
 
@@ -93,7 +93,7 @@ public class OwnerResourceUnitTest {
         // Act & Assert
         mockMvc.perform(put("/owners/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"firstName\": \"Johnny\", \"lastName\": \"Doe\", \"city\": \"Chicago\"}"))
+                .content("{\"firstName\": \"Johnny\", \"lastName\": \"Doe\", \"address\": \"123 Main St\", \"city\": \"Chicago\", \"telephone\": \"1234567890\"}"))
                 .andExpect(status().isNoContent());
         
         verify(ownerRepository).save(any(Owner.class));
@@ -150,7 +150,7 @@ public class OwnerResourceUnitTest {
         // Act & Assert
         mockMvc.perform(put("/owners/999")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"city\": \"Chicago\"}"))
+                .content("{\"firstName\": \"John\", \"lastName\": \"Doe\", \"address\": \"123 Main St\", \"city\": \"Chicago\", \"telephone\": \"1234567890\"}"))
                 .andExpect(status().isNotFound());
         
         verify(ownerRepository, never()).save(any(Owner.class));
