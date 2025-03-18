@@ -68,6 +68,24 @@ class VetTest {
         assertThat(toString).contains("Vet{");
         assertThat(toString).contains("firstName='James'");
         assertThat(toString).contains("lastName='Carter'");
-        assertThat(toString).contains("specialties=[]");
+        assertThat(toString).contains("specialties=null");
+    }
+
+    @Test
+    void testToStringWithSpecialties() {
+        Vet vet = new Vet();
+        vet.setFirstName("James");
+        vet.setLastName("Carter");
+        
+        Specialty specialty = new Specialty();
+        specialty.setName("radiology");
+        vet.addSpecialty(specialty);
+
+        String toString = vet.toString();
+        assertThat(toString).contains("Vet{");
+        assertThat(toString).contains("firstName='James'");
+        assertThat(toString).contains("lastName='Carter'");
+        assertThat(toString).contains("specialties=[");
+        assertThat(toString).contains("name='radiology'");
     }
 } 
