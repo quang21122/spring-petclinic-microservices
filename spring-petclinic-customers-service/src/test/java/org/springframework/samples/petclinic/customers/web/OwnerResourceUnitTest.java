@@ -8,8 +8,12 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.samples.petclinic.customers.model.Owner;
 import org.springframework.samples.petclinic.customers.model.OwnerRepository;
+import org.springframework.samples.petclinic.customers.web.mapper.OwnerEntityMapper;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +24,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ControllerAdvice
+class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
+}
+
 public class OwnerResourceUnitTest {
 
     private MockMvc mockMvc;
@@ -27,13 +35,31 @@ public class OwnerResourceUnitTest {
     @Mock
     private OwnerRepository ownerRepository;
 
+    @Mock
+    private OwnerEntityMapper ownerEntityMapper;
+
     @InjectMocks
     private OwnerResource ownerResource;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(ownerResource).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(ownerResource)
+            .setControllerAdvice(new RestResponseEntityExceptionHandler())
+            .build();
+
+        // Setup default behavior for mapper
+        Owner defaultOwner = new Owner();
+        when(ownerEntityMapper.map(any(Owner.class), any(OwnerRequest.class))).thenAnswer(invocation -> {
+            Owner owner = invocation.getArgument(0);
+            OwnerRequest request = invocation.getArgument(1);
+            owner.setFirstName(request.firstName());
+            owner.setLastName(request.lastName());
+            owner.setAddress(request.address());
+            owner.setCity(request.city());
+            owner.setTelephone(request.telephone());
+            return owner;
+        });
     }
 
     @Test
@@ -71,6 +97,10 @@ public class OwnerResourceUnitTest {
         owner.setId(1);
         owner.setFirstName("John");
         owner.setLastName("Doe");
+        owner.setAddress("123 Main St");
+        owner.setCity("New York");
+        owner.setTelephone("1234567890");
+        
         when(ownerRepository.save(any(Owner.class))).thenReturn(owner);
 
         // Act & Assert
@@ -87,6 +117,10 @@ public class OwnerResourceUnitTest {
         owner.setId(1);
         owner.setFirstName("John");
         owner.setLastName("Doe");
+        owner.setAddress("123 Main St");
+        owner.setCity("New York");
+        owner.setTelephone("1234567890");
+        
         when(ownerRepository.findById(1)).thenReturn(Optional.of(owner));
         when(ownerRepository.save(any(Owner.class))).thenReturn(owner);
 
