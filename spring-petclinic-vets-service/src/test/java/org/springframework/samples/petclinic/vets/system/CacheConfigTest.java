@@ -3,16 +3,24 @@ package org.springframework.samples.petclinic.vets.system;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ContextConfiguration(classes = {CacheConfig.class, VetsProperties.class})
+@SpringBootTest(classes = {CacheConfig.class, CacheConfigTest.TestConfig.class})
 @ActiveProfiles("test")
 class CacheConfigTest {
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        VetsProperties vetsProperties() {
+            return new VetsProperties(new VetsProperties.Cache(300, 1000));
+        }
+    }
 
     @Autowired
     private CacheManager cacheManager;
