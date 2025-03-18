@@ -77,7 +77,7 @@ class VetResourceTest {
         vet.setFirstName("James");
         vet.setLastName("Carter");
         vet.addSpecialty(specialty);
-
+        // test
         given(vetRepository.findAll()).willReturn(asList(vet));
 
         mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
