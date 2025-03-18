@@ -124,19 +124,15 @@ class VetResourceTest {
     }
 
     @Test
-    void shouldReturnXmlWhenXmlIsAccepted() throws Exception {
-        Vet vet = new Vet();
-        vet.setId(1);
-        vet.setFirstName("James");
-        vet.setLastName("Carter");
-
-        given(vetRepository.findAll()).willReturn(asList(vet));
-
+    void shouldReturnNotAcceptableForXmlRequest() throws Exception {
         mvc.perform(get("/vets").accept(MediaType.APPLICATION_XML))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+            .andExpect(status().isNotAcceptable());
+    }
 
-        verify(vetRepository, times(1)).findAll();
+    @Test
+    void shouldReturnNotAcceptableForInvalidMediaType() throws Exception {
+        mvc.perform(get("/vets").accept("invalid/type"))
+            .andExpect(status().isNotAcceptable());
     }
 
     @Test
@@ -163,12 +159,5 @@ class VetResourceTest {
             .andExpect(jsonPath("$[1].lastName").value("Leary"));
 
         verify(vetRepository, times(1)).findAll();
-    }
-
-    @Test
-    void shouldHandleInvalidAcceptHeader() throws Exception {
-        mvc.perform(get("/vets").accept("invalid/type"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 }
