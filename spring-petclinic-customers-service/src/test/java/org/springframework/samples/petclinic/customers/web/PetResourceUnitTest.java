@@ -1,11 +1,15 @@
 package org.springframework.samples.petclinic.customers.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.samples.petclinic.customers.model.*;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -37,7 +41,18 @@ public class PetResourceUnitTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(petResource).build();
+        
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setObjectMapper(objectMapper);
+        
+        mockMvc = MockMvcBuilders.standaloneSetup(petResource)
+            .setMessageConverters(converter)
+            .setControllerAdvice(new RestResponseEntityExceptionHandler())
+            .build();
     }
 
     @Test
@@ -219,6 +234,7 @@ public class PetResourceUnitTest {
         Owner owner = new Owner();
         owner.setId(1);
         when(ownerRepository.findById(1)).thenReturn(Optional.of(owner));
+        when(petRepository.findPetTypeById(1)).thenReturn(Optional.of(createPetType(1, "dog")));
         
         // Act & Assert
         mockMvc.perform(post("/owners/1/pets")

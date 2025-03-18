@@ -264,8 +264,11 @@ public class OwnerResourceUnitTest {
 
     @Test
     void shouldReturnBadRequestWhenSearchingWithEmptyLastName() throws Exception {
+        // Arrange
+        when(ownerRepository.findByLastName("")).thenReturn(Arrays.asList());
+
         // Act & Assert
-        mockMvc.perform(get("/owners/search?lastName=")
+        mockMvc.perform(get("/owners/search")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
