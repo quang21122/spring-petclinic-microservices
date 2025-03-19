@@ -14,7 +14,7 @@ import org.springframework.test.context.TestPropertySource;
     "spring.zipkin.enabled=false"
 })
 class CustomersServiceApplicationTest {
-
+    // Test
     @Test
     void contextLoads() {
         // This test verifies that the Spring context loads successfully
