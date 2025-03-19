@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
     "eureka.client.enabled=false"
 })
 class VisitsServiceApplicationTest {
-
+    // Test
     @Test
     void contextLoads(ApplicationContext context) {
         assertThat(context).isNotNull();
